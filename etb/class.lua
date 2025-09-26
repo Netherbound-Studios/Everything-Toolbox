@@ -70,18 +70,52 @@ local function make_class(name, super, defaults)
   -- call the superclass method with the same name as the caller (best-effort)
   function cls:super(...)
     -- try to infer method name from debug info
-    local info = debug.getinfo(2, 'n')
-    local method_name = info and info.name
+    -- Try several stack frames to find a named caller (works across runtimes/wrappers)
+    local method_name
+    for i = 2, 8 do
+      local info = debug.getinfo(i, 'n')
+      if info and info.name then
+        method_name = info.name
+        break
+      end
+    end
+
+    -- Fallback: if still unknown, try to locate the caller function in the
+    -- class chain by comparing function references. Be conservative: skip
+    -- obvious helper keys and stop if we would pick the same function as the
+    -- current caller (to avoid recursion).
+    if not method_name then
+      local finfo = debug.getinfo(2, 'f')
+      local caller_fn = finfo and finfo.func
+      if caller_fn then
+        local c = self.class
+        while c do
+          for k,v in pairs(c) do
+            if k == 'super' or k == 'supercall' or k == 'new' or k == 'extend' or k == 'include' or k == 'isInstance' then goto continue end
+            if v == caller_fn then
+              method_name = k
+              break
+            end
+            ::continue::
+          end
+          if method_name then break end
+          c = c.__super
+        end
+      end
+    end
+
     if not method_name then
       error("super() couldn't determine caller method name; call with explicit method name: self:super('method', ...)")
     end
+
     local parent = self.class and self.class.__super
     while parent do
       local fn = parent[method_name]
-      if fn then
+      -- avoid calling the same function we believe is the caller (prevents recursion)
+      if fn and not (self.class and self.class[method_name] == fn) then
         return fn(self, ...)
       end
-      parent = parent.super
+      parent = parent.__super
     end
     error("no superclass method '" .. tostring(method_name) .. "' found")
   end

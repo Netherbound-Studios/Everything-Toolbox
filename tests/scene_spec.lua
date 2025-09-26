@@ -2,8 +2,8 @@ local scene = require 'etb.scene'
 
 local passed = true
 
-local A = { load = function() A._loaded = true end, unload = function() A._unloaded = true end }
-local B = { load = function() B._loaded = true end }
+local A = { load = function(self) self._loaded = true end, unload = function(self) self._unloaded = true end }
+local B = { load = function(self) self._loaded = true end }
 
 scene.push(A)
 assert(A._loaded)

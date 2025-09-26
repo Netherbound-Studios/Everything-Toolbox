@@ -8,3 +8,9 @@
 - Basic tests under `tests/`
 
 
+## 0.1.1 - fixes
+
+- Fix `cls:super` to correctly traverse superclass chain and support inferred caller lookup
+- Add tests for `super` and `supercall` behavior
+
+

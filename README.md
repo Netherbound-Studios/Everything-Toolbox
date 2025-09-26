@@ -68,6 +68,6 @@ MIT
 
 ## Version
 
-See `VERSION` for the current release.
+See `VERSION` for the current release. This release (0.1.1) fixes superclass `super()` traversal and improves `super`/`supercall` behavior.
 
 
